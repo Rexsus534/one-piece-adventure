@@ -65,7 +65,7 @@ function fit(model,height=1.8){const b=new THREE.Box3().setFromObject(model),s=n
 function anim(k){if(!mixer)return;const names=Object.keys(actions);let n=names.find(a=>a.toLowerCase().includes(k))|| (k==="walk"?names.find(a=>a.toLowerCase().includes("run")):null);if(!n||n===current)return;Object.values(actions).forEach(a=>a.fadeOut(.12));actions[n].reset().fadeIn(.12).play();current=n;}
 let finished=false;function endLoad(){if(finished)return;finished=true;loading.classList.add("hidden");}
 function makeFallback(){const torso=new THREE.Mesh(new THREE.BoxGeometry(.65,1.05,.4),mat(0xc93c2d));torso.position.y=.95;player.add(torso);const head=new THREE.Mesh(new THREE.SphereGeometry(.32,16,12),mat(0xffd2a1));head.position.y=1.7;player.add(head);const hat=new THREE.Mesh(new THREE.CylinderGeometry(.55,.5,.14,16),mat(0x7b4c20));hat.position.y=2.05;player.add(hat);endLoad();}
-loader.load("./Rogue.gltf",g=>{if(finished)return;fit(g.scene);player.add(g.scene);mixer=new THREE.AnimationMixer(g.scene);g.animations.forEach(c=>actions[c.name]=mixer.clipAction(c));anim("idle");endLoad();},p=>{if(p.total)loading.querySelector("p").textContent="Macera hazırlanıyor "+Math.round(p.loaded/p.total*100)+"%";},()=>makeFallback());
+loader.load("./8810USAAT027ZSACEMWCOUTRE.gltf",g=>{if(finished)return;fit(g.scene);player.add(g.scene);mixer=new THREE.AnimationMixer(g.scene);g.animations.forEach(c=>actions[c.name]=mixer.clipAction(c));anim("idle");endLoad();},p=>{if(p.total)loading.querySelector("p").textContent="Macera hazırlanıyor "+Math.round(p.loaded/p.total*100)+"%";},()=>makeFallback());
 setTimeout(()=>{if(!finished)makeFallback();},12000);
 
 // NPCs from existing character files; the names/dialogue are custom for this game.
@@ -74,7 +74,6 @@ const npcList=[
  {file:"Ranger.gltf",x:-10,z:-8,name:"Makino",role:"Foosha Village Bar Sahibi",text:"Foosha küçük ve sakin bir köy. Shanks’ın tayfası buraya geldiğinde Luffy’nin korsan olma hayalleri daha da büyüyor."},
  {file:"Cleric.gltf",x:12,z:9,name:"Monkey D. Luffy",role:"Korsan Olmak İsteyen Çocuk",text:"Ben korsanların kralı olacağım! Bir tayfa kurup denize açılacağım!"},
  {file:"Wizard.gltf",x:-17,z:13,name:"Garp",role:"Denizci",text:"Korsan olmayı kafana koymuşsun! Denizlerin ne kadar tehlikeli olduğunu unutma."},
-undefined
 ];
 const npcs=[];
 for(const d of npcList){const group=new THREE.Group();group.position.set(d.x,0,d.z);scene.add(group);const npc={...d,group,mixer:null};npcs.push(npc);loader.load("./"+d.file,g=>{const model=cloneSkeleton(g.scene);fit(model);group.add(model);if(g.animations.length){npc.mixer=new THREE.AnimationMixer(model);const idle=g.animations.find(a=>a.name.toLowerCase().includes("idle"))||g.animations[0];npc.mixer.clipAction(idle).play();}},undefined,()=>{});}
