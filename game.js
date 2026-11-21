@@ -65,7 +65,41 @@ function fit(model,height=1.8){const b=new THREE.Box3().setFromObject(model),s=n
 function anim(k){if(!mixer)return;const names=Object.keys(actions);let n=names.find(a=>a.toLowerCase().includes(k))|| (k==="walk"?names.find(a=>a.toLowerCase().includes("run")):null);if(!n||n===current)return;Object.values(actions).forEach(a=>a.fadeOut(.12));actions[n].reset().fadeIn(.12).play();current=n;}
 let finished=false;function endLoad(){if(finished)return;finished=true;loading.classList.add("hidden");}
 function makeFallback(){const torso=new THREE.Mesh(new THREE.BoxGeometry(.65,1.05,.4),mat(0xc93c2d));torso.position.y=.95;player.add(torso);const head=new THREE.Mesh(new THREE.SphereGeometry(.32,16,12),mat(0xffd2a1));head.position.y=1.7;player.add(head);const hat=new THREE.Mesh(new THREE.CylinderGeometry(.55,.5,.14,16),mat(0x7b4c20));hat.position.y=2.05;player.add(hat);endLoad();}
-loader.load("./8810USAAT027ZSACEMWCOUTRE.gltf",g=>{if(finished)return;fit(g.scene);player.add(g.scene);mixer=new THREE.AnimationMixer(g.scene);g.animations.forEach(c=>actions[c.name]=mixer.clipAction(c));anim("idle");endLoad();},p=>{if(p.total)loading.querySelector("p").textContent="Macera hazırlanıyor "+Math.round(p.loaded/p.total*100)+"%";},()=>makeFallback());
+let luffyRig=[];
+function tintUntextured(model){
+ model.traverse(o=>{
+  if(!o.isMesh)return;
+  const meshKey=(o.name||"").toLowerCase();
+  const mats=Array.isArray(o.material)?o.material:[o.material];
+  mats.forEach(m=>{
+   if(!m)return;
+   const key=((m.name||"")+" "+meshKey).toLowerCase();
+   if(!m.map){
+    let color=null;
+    if(/skin|face|head|hand|arm.?skin|body.?skin/.test(key))color=0xf2bd91;
+    else if(/shirt|vest|coat|top|torso|jacket/.test(key))color=0xc8322b;
+    else if(/short|pant|trouser|bottom/.test(key))color=0x2456a6;
+    else if(/hair|black/.test(key))color=0x211b18;
+    else if(/hat|straw|belt/.test(key))color=0xc99a42;
+    if(color!==null&&m.color)m.color.setHex(color);
+   }
+   m.needsUpdate=true;
+  });
+  if(o.isBone&&/(arm|shoulder|elbow|leg|thigh|knee|spine|neck)/i.test(o.name||""))luffyRig.push(o);
+ });
+}
+function proceduralLuffyPose(t,moving){
+ const swing=moving?Math.sin(t*9)*.48:Math.sin(t*2)*.035;
+ for(const b of luffyRig){
+  const n=(b.name||"").toLowerCase();
+  if(/left.*(arm|shoulder)|arm.*left/.test(n))b.rotation.x=swing;
+  else if(/right.*(arm|shoulder)|arm.*right/.test(n))b.rotation.x=-swing;
+  else if(/left.*(leg|thigh)|leg.*left/.test(n))b.rotation.x=-swing;
+  else if(/right.*(leg|thigh)|leg.*right/.test(n))b.rotation.x=swing;
+ }
+}
+let luffyMoving=false;
+loader.load("./8810USAAT027ZSACEMWCOUTRE.gltf",g=>{if(finished)return;fit(g.scene);tintUntextured(g.scene);player.add(g.scene);if(g.animations.length){mixer=new THREE.AnimationMixer(g.scene);g.animations.forEach(c=>actions[c.name]=mixer.clipAction(c));const idle=g.animations.find(c=>/idle|stand|breath/i.test(c.name))||g.animations[0];current=idle.name;actions[idle.name].play();}endLoad();},p=>{if(p.total)loading.querySelector("p").textContent="Macera hazırlanıyor "+Math.round(p.loaded/p.total*100)+"%";},()=>makeFallback());
 setTimeout(()=>{if(!finished)makeFallback();},12000);
 
 // NPCs from existing character files; the names/dialogue are custom for this game.
@@ -115,12 +149,12 @@ let cameraAngle=0,dragging=false,lastX=0;
 renderer.domElement.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse"&&e.button===0){dragging=true;lastX=e.clientX;}});
 addEventListener("pointerup",()=>dragging=false);addEventListener("pointermove",e=>{if(dragging){cameraAngle-=(e.clientX-lastX)*.005;lastX=e.clientX;}});
 const forward=new THREE.Vector3(),right=new THREE.Vector3(),movement=new THREE.Vector3();
-function updatePlayer(dt){if(eatingTimer>0){eatingTimer=Math.max(0,eatingTimer-dt);player.rotation.z=Math.sin((1.15-eatingTimer)*12)*.12;player.position.y=Math.sin((1.15-eatingTimer)*10)*.08;anim("idle");return;}player.rotation.z=0;player.position.y=0;const x=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+joyX,z=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0)+joyY;movement.set(0,0,0);camera.getWorldDirection(forward);forward.y=0;forward.normalize();right.crossVectors(forward,new THREE.Vector3(0,1,0)).normalize();movement.addScaledVector(forward,-z);movement.addScaledVector(right,x);const moving=movement.lengthSq()>.01,running=!!keys.shift;if(moving){movement.normalize();player.position.addScaledVector(movement,(running?11:6.5)*dt);player.rotation.y=Math.atan2(movement.x,movement.z);anim(running?"run":"walk");}else anim("idle");player.position.x=THREE.MathUtils.clamp(player.position.x,-38,38);player.position.z=THREE.MathUtils.clamp(player.position.z,-38,38);}
+function updatePlayer(dt){if(eatingTimer>0){eatingTimer=Math.max(0,eatingTimer-dt);player.rotation.z=Math.sin((1.15-eatingTimer)*12)*.12;player.position.y=Math.sin((1.15-eatingTimer)*10)*.08;anim("idle");return;}player.rotation.z=0;player.position.y=0;const x=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+joyX,z=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0)+joyY;movement.set(0,0,0);camera.getWorldDirection(forward);forward.y=0;forward.normalize();right.crossVectors(forward,new THREE.Vector3(0,1,0)).normalize();movement.addScaledVector(forward,-z);movement.addScaledVector(right,x);const moving=movement.lengthSq()>.01,running=!!keys.shift;luffyMoving=moving;if(moving){movement.normalize();player.position.addScaledVector(movement,(running?11:6.5)*dt);player.rotation.y=Math.atan2(movement.x,movement.z);anim(running?"run":"walk");}else anim("idle");player.position.x=THREE.MathUtils.clamp(player.position.x,-38,38);player.position.z=THREE.MathUtils.clamp(player.position.z,-38,38);}
 function usePower(){if(powerTimer>0){toast("Güç etkisi zaten aktif!");return;}if(!collectedFruits.length){toast("Önce bir şeytan meyvesi ye!");return;}const fruit=collectedFruits.shift();powerColor=fruit.color;powerTimer=4.2;toast(fruit.name+" gücü aktif!");if(powerRing){scene.remove(powerRing);powerRing=null;}const ring=new THREE.Mesh(new THREE.TorusGeometry(1.8,.09,10,48),new THREE.MeshBasicMaterial({color:powerColor,transparent:true,opacity:.9}));ring.rotation.x=Math.PI/2;scene.add(ring);powerRing=ring;powerSparks=[];for(let n=0;n<18;n++){const orb=new THREE.Mesh(new THREE.SphereGeometry(.12,8,8),new THREE.MeshBasicMaterial({color:powerColor}));scene.add(orb);powerSparks.push({mesh:orb,angle:n*Math.PI*2/18,radius:2.1+(n%3)*.25,phase:n*.37});}}
 function updatePower(dt){if(powerTimer>0){powerTimer=Math.max(0,powerTimer-dt);if(powerRing){powerRing.position.set(player.position.x,player.position.y+1,player.position.z);powerRing.rotation.x=Math.PI/2;powerRing.rotation.z+=dt*2.2;powerRing.scale.setScalar(1+Math.sin(clock.elapsedTime*8)*.12);powerRing.material.opacity=powerTimer/4.2;}for(const s of powerSparks){s.angle+=dt*2.8;s.mesh.position.set(player.position.x+Math.cos(s.angle)*s.radius,player.position.y+1+Math.sin(clock.elapsedTime*4+s.phase)*.35,player.position.z+Math.sin(s.angle)*s.radius);}}else if(powerRing){scene.remove(powerRing);powerRing=null;for(const s of powerSparks)scene.remove(s.mesh);powerSparks=[];}}
 function updateCamera(dt){const desired=new THREE.Vector3(player.position.x+Math.sin(cameraAngle)*8,player.position.y+4.2,player.position.z+Math.cos(cameraAngle)*8);camera.position.lerp(desired,Math.min(dt*5,1));camera.lookAt(player.position.x,player.position.y+1.2,player.position.z);}
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}addEventListener("resize",resize);
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);updatePlayer(dt);updateCamera(dt);if(mixer)mixer.update(dt);for(const n of npcs)if(n.mixer)n.mixer.update(dt);updatePower(dt);for(const f of fruits)if(!f.taken){f.group.rotation.y+=dt*.9;f.group.position.y=.65+Math.sin(clock.elapsedTime*2+f.group.position.x)*.18;}renderer.render(scene,camera);}
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);updatePlayer(dt);updateCamera(dt);if(mixer)mixer.update(dt);if(luffyRig.length)proceduralLuffyPose(clock.elapsedTime,luffyMoving);for(const n of npcs)if(n.mixer)n.mixer.update(dt);updatePower(dt);for(const f of fruits)if(!f.taken){f.group.rotation.y+=dt*.9;f.group.position.y=.65+Math.sin(clock.elapsedTime*2+f.group.position.x)*.18;}renderer.render(scene,camera);}
 camera.position.set(0,5,9);camera.lookAt(0,1,0);updateInventory();document.querySelector("#level").textContent="1";document.querySelector("#money").textContent="100";document.querySelector("#xp").textContent="0";animate();
 // In-game atlas window controls
 const mapOverlay=document.querySelector("#worldMapOverlay");
