@@ -197,7 +197,20 @@ function usePower(){if(powerTimer>0){toast("Güç etkisi zaten aktif!");return;}
 function updatePower(dt){if(powerTimer>0){powerTimer=Math.max(0,powerTimer-dt);if(powerRing){powerRing.position.set(player.position.x,player.position.y+1,player.position.z);powerRing.rotation.x=Math.PI/2;powerRing.rotation.z+=dt*2.2;powerRing.scale.setScalar(1+Math.sin(clock.elapsedTime*8)*.12);powerRing.material.opacity=powerTimer/4.2;}for(const s of powerSparks){s.angle+=dt*2.8;s.mesh.position.set(player.position.x+Math.cos(s.angle)*s.radius,player.position.y+1+Math.sin(clock.elapsedTime*4+s.phase)*.35,player.position.z+Math.sin(s.angle)*s.radius);}}else if(powerRing){scene.remove(powerRing);powerRing=null;for(const s of powerSparks)scene.remove(s.mesh);powerSparks=[];}}
 function updateCamera(dt){const desired=new THREE.Vector3(player.position.x+Math.sin(cameraAngle)*8,player.position.y+4.2,player.position.z+Math.cos(cameraAngle)*8);camera.position.lerp(desired,Math.min(dt*5,1));camera.lookAt(player.position.x,player.position.y+1.2,player.position.z);}
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}addEventListener("resize",resize);
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);updatePlayer(dt);updateCamera(dt);if(mixer)mixer.update(dt);if(luffyRig.length)proceduralLuffyPose(clock.elapsedTime,luffyMoving);for(const n of npcs)if(n.mixer)n.mixer.update(dt);updatePower(dt);for(const f of fruits)if(!f.taken){f.group.rotation.y+=dt*.9;f.group.position.y=.65+Math.sin(clock.elapsedTime*2+f.group.position.x)*.18;}renderer.render(scene,camera);}
+function drawMiniMap(){
+ const el=document.querySelector("#miniMap");if(!el)return;
+ const c=el.getContext("2d"),w=el.width,h=el.height;
+ c.clearRect(0,0,w,h);c.fillStyle="#0c5274";c.fillRect(0,0,w,h);
+ c.fillStyle="#e3cc8a";c.beginPath();c.arc(w/2,h/2,69,0,Math.PI*2);c.fill();
+ c.fillStyle="#6eaa52";c.beginPath();c.arc(w/2,h/2,62,0,Math.PI*2);c.fill();
+ c.strokeStyle="#f7e4ac";c.lineWidth=4;c.beginPath();c.arc(w/2,h/2,66,0,Math.PI*2);c.stroke();
+ const px=x=>w/2+(x/42)*62,pz=z=>h/2+(z/42)*62;
+ c.fillStyle="#f3c94e";for(const n of npcs){c.beginPath();c.arc(px(n.group.position.x),pz(n.group.position.z),3.5,0,Math.PI*2);c.fill();}
+ c.fillStyle="#a8f0ff";for(const f of fruits){if(!f.taken){c.beginPath();c.arc(px(f.group.position.x),pz(f.group.position.z),3,0,Math.PI*2);c.fill();}}
+ c.fillStyle="#ff554c";c.strokeStyle="#fff";c.lineWidth=2;c.beginPath();c.arc(px(player.position.x),pz(player.position.z),5,0,Math.PI*2);c.fill();c.stroke();
+ c.fillStyle="#fff";c.font="bold 9px Arial";c.textAlign="center";c.fillText("FOOSHA",w/2,13);
+}
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);updatePlayer(dt);updateCamera(dt);if(mixer)mixer.update(dt);if(luffyRig.length)proceduralLuffyPose(clock.elapsedTime,luffyMoving);for(const n of npcs)if(n.mixer)n.mixer.update(dt);updatePower(dt);drawMiniMap();for(const f of fruits)if(!f.taken){f.group.rotation.y+=dt*.9;f.group.position.y=.65+Math.sin(clock.elapsedTime*2+f.group.position.x)*.18;}renderer.render(scene,camera);}
 camera.position.set(0,5,9);camera.lookAt(0,1,0);updateInventory();document.querySelector("#level").textContent="1";document.querySelector("#money").textContent="100";document.querySelector("#xp").textContent="0";animate();
 // In-game atlas window controls
 const mapOverlay=document.querySelector("#worldMapOverlay");
