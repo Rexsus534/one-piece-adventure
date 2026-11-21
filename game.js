@@ -21,7 +21,9 @@ function island(x,z,r,grass=0x7cbd55){
  const sand=new THREE.Mesh(new THREE.RingGeometry(r*.78,r*.88,48),mat(0xe6d18e)); sand.rotation.x=-Math.PI/2; sand.position.y=-.02; g.add(sand);
  return g;
 }
-island(0,0,42); // Tek harita: başlangıç adası
+island(0,0,42); // Foosha Village başlangıç adası
+function locationLabel(text,x,z,color="#fff2c6"){const c=document.createElement("canvas");c.width=512;c.height=128;const ctx=c.getContext("2d");ctx.fillStyle="rgba(20,35,50,.82)";ctx.fillRect(8,8,496,112);ctx.strokeStyle="#d9a441";ctx.lineWidth=5;ctx.strokeRect(8,8,496,112);ctx.font="bold 46px Arial";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle=color;ctx.fillText(text,256,64);const tex=new THREE.CanvasTexture(c);const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));sprite.scale.set(13,3.25,1);sprite.position.set(x,7,z);scene.add(sprite);return sprite;}
+locationLabel("FOOSHA VILLAGE",0,-32); locationLabel("KÖY İSKELESİ",31,3);
 
 function palm(x,z,s=1,base=0){
  const g=new THREE.Group(); g.position.set(x,base,z); scene.add(g);
@@ -68,11 +70,11 @@ setTimeout(()=>{if(!finished)makeFallback();},12000);
 
 // NPCs from existing character files; the names/dialogue are custom for this game.
 const npcList=[
- {file:"Warrior.gltf",x:8,z:-5,name:"Kaptan Roka",role:"Köy kaptanı",text:"Yeni misin? Kıyıdaki meyveleri topla; adalar hakkında bilgi verebilirim."},
- {file:"Ranger.gltf",x:-10,z:-8,name:"Mira",role:"Gezgin",text:"İkinci adaya giden iskele doğuda. Orada daha nadir meyveler bulunur."},
- {file:"Cleric.gltf",x:12,z:9,name:"Lina",role:"Doktor",text:"Yolculukta dikkatli ol. Meyveler tuhaf güçler kazandırabilir."},
- {file:"Wizard.gltf",x:88,z:-42,name:"Yaşlı Koru",role:"Ada bilgesi",text:"Deniz üç adaya açılıyor. Her adanın kendi sırrı var."},
- {file:"Monk.gltf",x:-85,z:55,name:"Usta Zen",role:"Antrenör",text:"Daha hızlı hareket etmek için SHIFT ile koşmayı dene."}
+ {file:"Warrior.gltf",x:8,z:-5,name:"Shanks",role:"Kızıl Saçlı Korsan",text:"Foosha’ya hoş geldin. Deniz büyük ve tehlikeli; korsan olacaksan kendi yolunu seç. Bir gün yeniden karşılaşırız."},
+ {file:"Ranger.gltf",x:-10,z:-8,name:"Makino",role:"Foosha Village Bar Sahibi",text:"Shanks ve tayfası köyümüzü sık sık ziyaret eder. Luffy yine korsan olmayı düşünüyor!"},
+ {file:"Cleric.gltf",x:12,z:9,name:"Monkey D. Luffy",role:"Korsan Olmak İsteyen Çocuk",text:"Ben korsanların kralı olacağım! Shanks’ın tayfasıyla denize açılmak istiyorum!"},
+ {file:"Wizard.gltf",x:88,z:-42,name:"Garp",role:"Denizci",text:"Korsan olmak mı? Denizciliğin ne demek olduğunu öğrenmen gerek!"},
+ {file:"Monk.gltf",x:-85,z:55,name:"Benn Beckman",role:"Kızıl Saçlı Korsan",text:"Shanks’ın tayfası denizleri iyi tanır. Güçlü olmak kadar doğru karar vermek de önemlidir."}
 ];
 const npcs=[];
 for(const d of npcList){const group=new THREE.Group();group.position.set(d.x,0,d.z);scene.add(group);const npc={...d,group,mixer:null};npcs.push(npc);loader.load("./"+d.file,g=>{const model=cloneSkeleton(g.scene);fit(model);group.add(model);if(g.animations.length){npc.mixer=new THREE.AnimationMixer(model);const idle=g.animations.find(a=>a.name.toLowerCase().includes("idle"))||g.animations[0];npc.mixer.clipAction(idle).play();}},undefined,()=>{});}
