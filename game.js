@@ -43,19 +43,19 @@ function dock(x,z,len=14,rot=0){
  const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot; scene.add(g);
  const wood=mat(0x8b603a);
  for(let i=0;i<5;i++){const plank=new THREE.Mesh(new THREE.BoxGeometry(len,.3,1.05),wood);plank.position.set(0,.05,i-2);plank.castShadow=true;g.add(plank);}
- for(let i=0;i<4;i++){const post=new THREE.Mesh(new CylinderGeometry(.22,.25,2,8),wood);post.position.set(-len/2+i*len/3,-.6,2.5);g.add(post);}
+ for(let i=0;i<4;i++){const post=new THREE.Mesh(new THREE.CylinderGeometry(.22,.25,2,8),wood);post.position.set(-len/2+i*len/3,-.6,2.5);g.add(post);}
 }
 dock(35,4,18,-.25);
 function boat(x,z,scale=1){
  const g=new THREE.Group();g.position.set(x,-.7,z);scene.add(g);
  const hull=new THREE.Mesh(new THREE.ConeGeometry(2.3*scale,7*scale,6),mat(0x713c28));hull.rotation.x=Math.PI/2; hull.rotation.z=Math.PI/6;hull.position.y=.1;g.add(hull);
- const mast=new THREE.Mesh(new CylinderGeometry(.12,.16,6*scale,8),mat(0x5b391f));mast.position.y=3*scale;g.add(mast);
- const sail=new THREE.Mesh(new PlaneGeometry(3.4*scale,4.2*scale),new THREE.MeshStandardMaterial({color:0xf3e5c0,side:THREE.DoubleSide})); sail.position.set(0,3.3*scale,0);g.add(sail);
- const flag=new THREE.Mesh(new ConeGeometry(.5*scale,1.2*scale,3),mat(0x9f2226));flag.position.set(0,6.3*scale,0);g.add(flag);
+ const mast=new THREE.Mesh(new THREE.CylinderGeometry(.12,.16,6*scale,8),mat(0x5b391f));mast.position.y=3*scale;g.add(mast);
+ const sail=new THREE.Mesh(new THREE.PlaneGeometry(3.4*scale,4.2*scale),new THREE.MeshStandardMaterial({color:0xf3e5c0,side:THREE.DoubleSide})); sail.position.set(0,3.3*scale,0);g.add(sail);
+ const flag=new THREE.Mesh(new THREE.ConeGeometry(.5*scale,1.2*scale,3),mat(0x9f2226));flag.position.set(0,6.3*scale,0);g.add(flag);
 }
 boat(26,10,.8);
 
-function crate(x,z){const c=new THREE.Mesh(new BoxGeometry(1.4,1.4,1.4),mat(0x9b6a38));c.position.set(x,.7,z);c.castShadow=true;scene.add(c);}
+function crate(x,z){const c=new THREE.Mesh(new THREE.BoxGeometry(1.4,1.4,1.4),mat(0x9b6a38));c.position.set(x,.7,z);c.castShadow=true;scene.add(c);}
 for(const p of [[-16,-5],[-19,-7],[4,-24],[24,2]])crate(...p);
 
 const player=new THREE.Group();scene.add(player);let mixer=null,actions={},current="";
@@ -89,10 +89,10 @@ const fruitTypes=[
 const fruits=[];
 function createFruit(data,x,z){
  const g=new THREE.Group();g.position.set(x,.65,z);
- const sphere=new THREE.Mesh(new SphereGeometry(.55,20,16),mat(data.color,.45));sphere.scale.set(1,.85,1);g.add(sphere);
- const swirl=new THREE.Mesh(new TorusGeometry(.23,.07,8,16),mat(0xf4e9cf));swirl.position.y=.2;swirl.rotation.x=Math.PI/2;g.add(swirl);
- const stem=new THREE.Mesh(new CylinderGeometry(.07,.1,.35,7),mat(0x5c8b3e));stem.position.y=.62;stem.rotation.z=.35;g.add(stem);
- const leaf=new THREE.Mesh(new SphereGeometry(.18,8,8),mat(0x63a843));leaf.position.set(.22,.7,0);leaf.scale.set(1,.35,.6);g.add(leaf);
+ const sphere=new THREE.Mesh(new THREE.SphereGeometry(.55,20,16),mat(data.color,.45));sphere.scale.set(1,.85,1);g.add(sphere);
+ const swirl=new THREE.Mesh(new THREE.TorusGeometry(.23,.07,8,16),mat(0xf4e9cf));swirl.position.y=.2;swirl.rotation.x=Math.PI/2;g.add(swirl);
+ const stem=new THREE.Mesh(new THREE.CylinderGeometry(.07,.1,.35,7),mat(0x5c8b3e));stem.position.y=.62;stem.rotation.z=.35;g.add(stem);
+ const leaf=new THREE.Mesh(new THREE.SphereGeometry(.18,8,8),mat(0x63a843));leaf.position.set(.22,.7,0);leaf.scale.set(1,.35,.6);g.add(leaf);
  scene.add(g); fruits.push({data,group:g,taken:false});
 }
 createFruit(fruitTypes[0],-21,12);createFruit(fruitTypes[1],12,-22);createFruit(fruitTypes[2],92,-55);createFruit(fruitTypes[3],-98,50);createFruit(fruitTypes[4],104,-29);createFruit(fruitTypes[5],-75,69);
