@@ -23,7 +23,7 @@ function island(x,z,r,grass=0x7cbd55){
 }
 island(0,0,42); // Foosha Village başlangıç adası
 function locationLabel(text,x,z,color="#fff2c6"){const c=document.createElement("canvas");c.width=512;c.height=128;const ctx=c.getContext("2d");ctx.fillStyle="rgba(20,35,50,.82)";ctx.fillRect(8,8,496,112);ctx.strokeStyle="#d9a441";ctx.lineWidth=5;ctx.strokeRect(8,8,496,112);ctx.font="bold 46px Arial";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle=color;ctx.fillText(text,256,64);const tex=new THREE.CanvasTexture(c);const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));sprite.scale.set(13,3.25,1);sprite.position.set(x,7,z);scene.add(sprite);return sprite;}
-locationLabel("FOOSHA VILLAGE",0,-32); locationLabel("KÖY İSKELESİ",31,3);
+locationLabel("FOOSHA VILLAGE",0,-32); locationLabel("KÖY İSKELESİ",25,7);
 
 function palm(x,z,s=1,base=0){
  const g=new THREE.Group(); g.position.set(x,base,z); scene.add(g);
@@ -70,11 +70,11 @@ setTimeout(()=>{if(!finished)makeFallback();},12000);
 
 // NPCs from existing character files; the names/dialogue are custom for this game.
 const npcList=[
- {file:"Warrior.gltf",x:8,z:-5,name:"Shanks",role:"Kızıl Saçlı Korsan",text:"Foosha’ya hoş geldin. Deniz büyük ve tehlikeli; korsan olacaksan kendi yolunu seç. Bir gün yeniden karşılaşırız."},
- {file:"Ranger.gltf",x:-10,z:-8,name:"Makino",role:"Foosha Village Bar Sahibi",text:"Shanks ve tayfası köyümüzü sık sık ziyaret eder. Luffy yine korsan olmayı düşünüyor!"},
- {file:"Cleric.gltf",x:12,z:9,name:"Monkey D. Luffy",role:"Korsan Olmak İsteyen Çocuk",text:"Ben korsanların kralı olacağım! Shanks’ın tayfasıyla denize açılmak istiyorum!"},
- {file:"Wizard.gltf",x:88,z:-42,name:"Garp",role:"Denizci",text:"Korsan olmak mı? Denizciliğin ne demek olduğunu öğrenmen gerek!"},
- {file:"Monk.gltf",x:-85,z:55,name:"Benn Beckman",role:"Kızıl Saçlı Korsan",text:"Shanks’ın tayfası denizleri iyi tanır. Güçlü olmak kadar doğru karar vermek de önemlidir."}
+ {file:"Warrior.gltf",x:8,z:-5,name:"Shanks",role:"Kızıl Saçlı Korsan",text:"Foosha’ya hoş geldin. Grand Line’a açılmak istiyorsan önce kendi yolunu çiz. Korsanlık kolay değil."},
+ {file:"Ranger.gltf",x:-10,z:-8,name:"Makino",role:"Foosha Village Bar Sahibi",text:"Foosha küçük ve sakin bir köy. Shanks’ın tayfası buraya geldiğinde Luffy’nin korsan olma hayalleri daha da büyüyor."},
+ {file:"Cleric.gltf",x:12,z:9,name:"Monkey D. Luffy",role:"Korsan Olmak İsteyen Çocuk",text:"Ben korsanların kralı olacağım! Bir tayfa kurup denize açılacağım!"},
+ {file:"Wizard.gltf",x:-17,z:13,name:"Garp",role:"Denizci",text:"Korsan olmayı kafana koymuşsun! Denizlerin ne kadar tehlikeli olduğunu unutma."},
+undefined
 ];
 const npcs=[];
 for(const d of npcList){const group=new THREE.Group();group.position.set(d.x,0,d.z);scene.add(group);const npc={...d,group,mixer:null};npcs.push(npc);loader.load("./"+d.file,g=>{const model=cloneSkeleton(g.scene);fit(model);group.add(model);if(g.animations.length){npc.mixer=new THREE.AnimationMixer(model);const idle=g.animations.find(a=>a.name.toLowerCase().includes("idle"))||g.animations[0];npc.mixer.clipAction(idle).play();}},undefined,()=>{});}
@@ -102,7 +102,7 @@ const inventory=[];const collectedFruits=[];const fruitBox=document.querySelecto
 function updateInventory(){fruitBox.textContent=inventory.length?inventory.join(" · "):"Boş";document.querySelector("#fruitCount").textContent=inventory.length;}
 function toast(t){message.textContent=t;message.classList.remove("hidden");clearTimeout(toast.timer);toast.timer=setTimeout(()=>message.classList.add("hidden"),2600);}
 function nearby(){let found=null,dist=3.6;for(const n of npcs){const d=player.position.distanceTo(n.group.position);if(d<dist){found=n;dist=d;}}for(const f of fruits){if(f.taken)continue;const d=player.position.distanceTo(f.group.position);if(d<dist){found=f;dist=d;}}return found;}
-function interact(){if(eatingTimer>0){toast("Meyve yeme animasyonu sürüyor.");return;}const target=nearby();if(!target){toast("Yakında konuşacak biri veya meyve yok.");return;}if(target.data){target.taken=true;inventory.push(target.data.name);collectedFruits.push(target.data);scene.remove(target.group);eatingTimer=1.15;updateInventory();toast(target.data.name+" meyvesini yiyorsun!");quest.textContent="Görev: 6 şeytan meyvesini bul ("+inventory.length+"/6)";return;}document.querySelector("#npcName").textContent=target.name+" · "+target.role;document.querySelector("#npcText").textContent=target.text;document.querySelector("#dialog").classList.remove("hidden");}
+function interact(){if(eatingTimer>0){toast("Meyve yeme animasyonu sürüyor.");return;}const target=nearby();if(!target){toast("Yakında konuşacak biri veya meyve yok.");return;}if(target.data){target.taken=true;inventory.push(target.data.name);collectedFruits.push(target.data);scene.remove(target.group);eatingTimer=1.15;updateInventory();toast(target.data.name+" meyvesini yiyorsun!");quest.textContent="Foosha Village’ı keşfet ve köy sakinleriyle konuş. Şeytan meyveleri nadirdir; bulduğun meyveyi envanterine ekle.";return;}document.querySelector("#npcName").textContent=target.name+" · "+target.role;document.querySelector("#npcText").textContent=target.text;document.querySelector("#dialog").classList.remove("hidden");}
 document.querySelector("#closeDialog").onclick=()=>document.querySelector("#dialog").classList.add("hidden");document.querySelector("#usePower").onclick=usePower;
 document.querySelector("#interact").onclick=interact;addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==="e")interact();if(e.key.toLowerCase()==="f")usePower();});addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
