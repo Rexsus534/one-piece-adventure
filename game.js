@@ -169,6 +169,8 @@ function loadPlayer() {
 }
 
 loadPlayer();
+hideLoading();
+showMessage("OYUN MOTORU ÇALIŞIYOR!");
 
 // NPC characters
 const npcData = [
