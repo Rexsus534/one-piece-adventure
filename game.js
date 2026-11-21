@@ -21,7 +21,7 @@ function island(x,z,r,grass=0x7cbd55){
  const sand=new THREE.Mesh(new THREE.RingGeometry(r*.78,r*.88,48),mat(0xe6d18e)); sand.rotation.x=-Math.PI/2; sand.position.y=-.02; g.add(sand);
  return g;
 }
-island(0,0,42); island(88,-42,27,0x77a95a); island(-85,55,25,0x6fa84d);
+island(0,0,42); // Tek harita: başlangıç adası
 
 function palm(x,z,s=1,base=0){
  const g=new THREE.Group(); g.position.set(x,base,z); scene.add(g);
@@ -29,8 +29,7 @@ function palm(x,z,s=1,base=0){
  for(let i=0;i<7;i++){const a=i*Math.PI*2/7, leaf=new THREE.Mesh(new THREE.ConeGeometry(.65*s,4.2*s,5),mat(0x207a42)); leaf.position.set(Math.sin(a)*1.2*s,4.4*s,Math.cos(a)*1.2*s); leaf.rotation.z=Math.cos(a)*.65; leaf.rotation.x=Math.sin(a)*.65; leaf.castShadow=true; g.add(leaf);}
 }
 for(let i=0;i<25;i++){const a=i*2.399,rad=14+(i%4)*5; palm(Math.cos(a)*rad,Math.sin(a)*rad,.75+(i%3)*.15);}
-for(let i=0;i<12;i++){const a=i*2.1,rad=9+(i%3)*4; palm(88+Math.cos(a)*rad,-42+Math.sin(a)*rad,.7+(i%3)*.2);}
-for(let i=0;i<9;i++){const a=i*2.3,rad=8+(i%2)*5; palm(-85+Math.cos(a)*rad,55+Math.sin(a)*rad,.65+(i%3)*.2);}
+
 
 function hut(x,z,scale=1){
  const g=new THREE.Group(); g.position.set(x,0,z); scene.add(g);
@@ -38,7 +37,7 @@ function hut(x,z,scale=1){
  const roof=new THREE.Mesh(new THREE.ConeGeometry(3.2*scale,2*scale,4),mat(0x9a4c35)); roof.position.y=4*scale; roof.rotation.y=Math.PI/4; roof.castShadow=true; g.add(roof);
  const door=new THREE.Mesh(new THREE.BoxGeometry(.9*scale,1.8*scale,.12*scale),mat(0x53301c)); door.position.set(0,.9*scale,1.8*scale); g.add(door);
 }
-hut(-6,-3,1.25); hut(7,-15,.85); hut(16,9,.9); hut(87,-40,1.1); hut(-85,55,.95);
+hut(-6,-3,1.25); hut(7,-15,.85); hut(16,9,.9);
 
 function dock(x,z,len=14,rot=0){
  const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot; scene.add(g);
@@ -46,7 +45,7 @@ function dock(x,z,len=14,rot=0){
  for(let i=0;i<5;i++){const plank=new THREE.Mesh(new THREE.BoxGeometry(len,.3,1.05),wood);plank.position.set(0,.05,i-2);plank.castShadow=true;g.add(plank);}
  for(let i=0;i<4;i++){const post=new THREE.Mesh(new CylinderGeometry(.22,.25,2,8),wood);post.position.set(-len/2+i*len/3,-.6,2.5);g.add(post);}
 }
-dock(35,4,18,-.25); dock(105,-41,15,.35); dock(-66,40,13,-.4);
+dock(35,4,18,-.25);
 function boat(x,z,scale=1){
  const g=new THREE.Group();g.position.set(x,-.7,z);scene.add(g);
  const hull=new THREE.Mesh(new THREE.ConeGeometry(2.3*scale,7*scale,6),mat(0x713c28));hull.rotation.x=Math.PI/2; hull.rotation.z=Math.PI/6;hull.position.y=.1;g.add(hull);
@@ -54,10 +53,10 @@ function boat(x,z,scale=1){
  const sail=new THREE.Mesh(new PlaneGeometry(3.4*scale,4.2*scale),new THREE.MeshStandardMaterial({color:0xf3e5c0,side:THREE.DoubleSide})); sail.position.set(0,3.3*scale,0);g.add(sail);
  const flag=new THREE.Mesh(new ConeGeometry(.5*scale,1.2*scale,3),mat(0x9f2226));flag.position.set(0,6.3*scale,0);g.add(flag);
 }
-boat(26,10,.8); boat(99,-27,.65); boat(-68,62,.7);
+boat(26,10,.8);
 
 function crate(x,z){const c=new THREE.Mesh(new BoxGeometry(1.4,1.4,1.4),mat(0x9b6a38));c.position.set(x,.7,z);c.castShadow=true;scene.add(c);}
-for(const p of [[-16,-5],[-19,-7],[4,-24],[24,2],[90,-52],[76,-33],[-91,60]])crate(...p);
+for(const p of [[-16,-5],[-19,-7],[4,-24],[24,2]])crate(...p);
 
 const player=new THREE.Group();scene.add(player);let mixer=null,actions={},current="";
 function fit(model,height=1.8){const b=new THREE.Box3().setFromObject(model),s=new THREE.Vector3();b.getSize(s);if(s.y>0)model.scale.multiplyScalar(height/s.y);const f=new THREE.Box3().setFromObject(model);model.position.y-=f.min.y;model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});}
@@ -115,7 +114,7 @@ let cameraAngle=0,dragging=false,lastX=0;
 renderer.domElement.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse"&&e.button===0){dragging=true;lastX=e.clientX;}});
 addEventListener("pointerup",()=>dragging=false);addEventListener("pointermove",e=>{if(dragging){cameraAngle-=(e.clientX-lastX)*.005;lastX=e.clientX;}});
 const forward=new THREE.Vector3(),right=new THREE.Vector3(),movement=new THREE.Vector3();
-function updatePlayer(dt){const x=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+joyX,z=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0)+joyY;movement.set(0,0,0);camera.getWorldDirection(forward);forward.y=0;forward.normalize();right.crossVectors(forward,new THREE.Vector3(0,1,0)).normalize();movement.addScaledVector(forward,-z);movement.addScaledVector(right,x);const moving=movement.lengthSq()>.01,running=!!keys.shift;if(moving){movement.normalize();player.position.addScaledVector(movement,(running?11:6.5)*dt);player.rotation.y=Math.atan2(movement.x,movement.z);anim(running?"run":"walk");}else anim("idle");player.position.x=THREE.MathUtils.clamp(player.position.x,-112,125);player.position.z=THREE.MathUtils.clamp(player.position.z,-100,110);}
+function updatePlayer(dt){const x=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+joyX,z=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0)+joyY;movement.set(0,0,0);camera.getWorldDirection(forward);forward.y=0;forward.normalize();right.crossVectors(forward,new THREE.Vector3(0,1,0)).normalize();movement.addScaledVector(forward,-z);movement.addScaledVector(right,x);const moving=movement.lengthSq()>.01,running=!!keys.shift;if(moving){movement.normalize();player.position.addScaledVector(movement,(running?11:6.5)*dt);player.rotation.y=Math.atan2(movement.x,movement.z);anim(running?"run":"walk");}else anim("idle");player.position.x=THREE.MathUtils.clamp(player.position.x,-38,38);player.position.z=THREE.MathUtils.clamp(player.position.z,-38,38);}
 function updateCamera(dt){const desired=new THREE.Vector3(player.position.x+Math.sin(cameraAngle)*8,player.position.y+4.2,player.position.z+Math.cos(cameraAngle)*8);camera.position.lerp(desired,Math.min(dt*5,1));camera.lookAt(player.position.x,player.position.y+1.2,player.position.z);}
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}addEventListener("resize",resize);
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);updatePlayer(dt);updateCamera(dt);if(mixer)mixer.update(dt);for(const n of npcs)if(n.mixer)n.mixer.update(dt);for(const f of fruits)if(!f.taken){f.group.rotation.y+=dt*.9;f.group.position.y=.65+Math.sin(clock.elapsedTime*2+f.group.position.x)*.18;}renderer.render(scene,camera);}
