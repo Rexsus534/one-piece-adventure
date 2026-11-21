@@ -1,517 +1,122 @@
-
 import * as THREE from "https://esm.sh/three@0.160.0";
 import { GLTFLoader } from "https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
 import { clone as cloneSkeleton } from "https://esm.sh/three@0.160.0/examples/jsm/utils/SkeletonUtils.js";
 
-const canvas = document.querySelector("#game");
-const loading = document.querySelector("#loading");
-const message = document.querySelector("#message");
-const dialog = document.querySelector("#dialog");
+const canvas=document.querySelector("#game"), loading=document.querySelector("#loading"), message=document.querySelector("#message");
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x8fd9ff); scene.fog=new THREE.Fog(0x8fd9ff,100,260);
+const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,500);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true}); renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); renderer.shadowMap.enabled=true; renderer.outputColorSpace=THREE.SRGBColorSpace;
+const clock=new THREE.Clock(), loader=new GLTFLoader();
+scene.add(new THREE.HemisphereLight(0xe6f7ff,0x52663a,2));
+const sun=new THREE.DirectionalLight(0xffedc5,2.4); sun.position.set(-35,60,30); sun.castShadow=true; sun.shadow.mapSize.set(1024,1024); scene.add(sun);
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x8bd8ff);
-scene.fog = new THREE.Fog(0x8bd8ff, 45, 140);
+const mat=(color,rough=.9)=>new THREE.MeshStandardMaterial({color,roughness:rough});
+const ocean=new THREE.Mesh(new THREE.PlaneGeometry(500,500),mat(0x138bc4,.35)); ocean.rotation.x=-Math.PI/2; ocean.position.y=-1.3; scene.add(ocean);
+const waterline=new THREE.Mesh(new THREE.PlaneGeometry(500,500),new THREE.MeshBasicMaterial({color:0x64d8ef,transparent:true,opacity:.08})); waterline.rotation.x=-Math.PI/2; waterline.position.y=-1.22; scene.add(waterline);
 
-const camera = new THREE.PerspectiveCamera(
-  65, innerWidth / innerHeight, 0.1, 500
-);
-
-const renderer = new THREE.WebGLRenderer({
-  canvas,
-  antialias: true
-});
-
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-const clock = new THREE.Clock();
-const loader = new GLTFLoader();
-
-scene.add(new THREE.HemisphereLight(0xc8edff, 0x53613a, 2));
-
-const sun = new THREE.DirectionalLight(0xffedc5, 2.5);
-sun.position.set(-30, 55, 25);
-sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-scene.add(sun);
-
-// DENİZ
-const sea = new THREE.Mesh(
-  new THREE.PlaneGeometry(500, 500),
-  new THREE.MeshStandardMaterial({
-    color: 0x168cc5,
-    roughness: 0.4
-  })
-);
-sea.rotation.x = -Math.PI / 2;
-sea.position.y = -1.1;
-scene.add(sea);
-
-// ADA
-const island = new THREE.Mesh(
-  new THREE.CircleGeometry(42, 80),
-  new THREE.MeshStandardMaterial({ color: 0x8fbd65 })
-);
-island.rotation.x = -Math.PI / 2;
-island.position.y = -0.18;
-island.receiveShadow = true;
-scene.add(island);
-
-const beach = new THREE.Mesh(
-  new THREE.RingGeometry(36, 42, 80),
-  new THREE.MeshStandardMaterial({
-    color: 0xd9c18a,
-    side: THREE.DoubleSide
-  })
-);
-beach.rotation.x = -Math.PI / 2;
-beach.position.y = -0.12;
-scene.add(beach);
-
-// AĞAÇLAR
-function makeTree(x, z, scale = 1) {
-  const tree = new THREE.Group();
-
-  const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.22, 0.32, 2.2, 8),
-    new THREE.MeshStandardMaterial({ color: 0x76502d })
-  );
-  trunk.position.y = 1.1;
-  trunk.castShadow = true;
-  tree.add(trunk);
-
-  const crown = new THREE.Mesh(
-    new THREE.SphereGeometry(1.25, 12, 10),
-    new THREE.MeshStandardMaterial({ color: 0x287b43 })
-  );
-  crown.position.y = 2.55;
-  crown.scale.set(1.15, 0.8, 1.1);
-  crown.castShadow = true;
-  tree.add(crown);
-
-  tree.position.set(x, 0, z);
-  tree.scale.setScalar(scale);
-  scene.add(tree);
+function island(x,z,r,grass=0x7cbd55){
+ const g=new THREE.Group(); g.position.set(x,0,z); scene.add(g);
+ const land=new THREE.Mesh(new THREE.CylinderGeometry(r*.86,r,3.6,48,1),mat(0x765337)); land.position.y=-1.9; land.castShadow=true; land.receiveShadow=true; g.add(land);
+ const top=new THREE.Mesh(new THREE.CircleGeometry(r*.86,48),mat(grass)); top.rotation.x=-Math.PI/2; top.position.y=-.08; top.receiveShadow=true; g.add(top);
+ const sand=new THREE.Mesh(new THREE.RingGeometry(r*.78,r*.88,48),mat(0xe6d18e)); sand.rotation.x=-Math.PI/2; sand.position.y=-.02; g.add(sand);
+ return g;
 }
+island(0,0,42); island(88,-42,27,0x77a95a); island(-85,55,25,0x6fa84d);
 
-[
-  [-17,-13],[-22,4],[-14,19],[18,-17],
-  [25,-5],[20,17],[-3,27],[5,-26],
-  [-30,-25],[30,25],[0,-34],[32,0]
-].forEach(([x,z], i) => makeTree(x, z, 0.85 + (i % 3) * 0.12));
-
-// OYUNCU
-const player = new THREE.Group();
-scene.add(player);
-
-let playerMixer = null;
-let playerActions = {};
-let activeAction = "";
-
-function fitModel(model, targetHeight = 1.8) {
-  const bounds = new THREE.Box3().setFromObject(model);
-  const size = new THREE.Vector3();
-  bounds.getSize(size);
-
-  if (size.y > 0) {
-    model.scale.multiplyScalar(targetHeight / size.y);
-  }
-
-  const fitted = new THREE.Box3().setFromObject(model);
-  model.position.y -= fitted.min.y;
-
-  model.traverse(obj => {
-    if (obj.isMesh) {
-      obj.castShadow = true;
-      obj.receiveShadow = true;
-    }
-  });
+function palm(x,z,s=1,base=0){
+ const g=new THREE.Group(); g.position.set(x,base,z); scene.add(g);
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.28*s,.45*s,4.8*s,7),mat(0x93633a)); trunk.position.y=2.4*s; trunk.castShadow=true; g.add(trunk);
+ for(let i=0;i<7;i++){const a=i*Math.PI*2/7, leaf=new THREE.Mesh(new THREE.ConeGeometry(.65*s,4.2*s,5),mat(0x207a42)); leaf.position.set(Math.sin(a)*1.2*s,4.4*s,Math.cos(a)*1.2*s); leaf.rotation.z=Math.cos(a)*.65; leaf.rotation.x=Math.sin(a)*.65; leaf.castShadow=true; g.add(leaf);}
 }
+for(let i=0;i<25;i++){const a=i*2.399,rad=14+(i%4)*5; palm(Math.cos(a)*rad,Math.sin(a)*rad,.75+(i%3)*.15);}
+for(let i=0;i<12;i++){const a=i*2.1,rad=9+(i%3)*4; palm(88+Math.cos(a)*rad,-42+Math.sin(a)*rad,.7+(i%3)*.2);}
+for(let i=0;i<9;i++){const a=i*2.3,rad=8+(i%2)*5; palm(-85+Math.cos(a)*rad,55+Math.sin(a)*rad,.65+(i%3)*.2);}
 
-function playAnimation(kind) {
-  if (!playerMixer) return;
-
-  const names = Object.keys(playerActions);
-  let chosen = null;
-
-  if (kind === "run") {
-    chosen = names.find(n => n.toLowerCase().includes("run"));
-  } else if (kind === "walk") {
-    chosen = names.find(n => n.toLowerCase().includes("walk"));
-    if (!chosen) {
-      chosen = names.find(n => n.toLowerCase().includes("run"));
-    }
-  } else {
-    chosen = names.find(n => n.toLowerCase().includes("idle"));
-  }
-
-  if (!chosen || chosen === activeAction) return;
-
-  Object.values(playerActions).forEach(action => {
-    action.fadeOut(0.15);
-  });
-
-  playerActions[chosen].reset().fadeIn(0.15).play();
-  activeAction = chosen;
+function hut(x,z,scale=1){
+ const g=new THREE.Group(); g.position.set(x,0,z); scene.add(g);
+ const walls=new THREE.Mesh(new THREE.BoxGeometry(4*scale,3*scale,3.5*scale),mat(0xd8a66a)); walls.position.y=1.5*scale; walls.castShadow=true; g.add(walls);
+ const roof=new THREE.Mesh(new THREE.ConeGeometry(3.2*scale,2*scale,4),mat(0x9a4c35)); roof.position.y=4*scale; roof.rotation.y=Math.PI/4; roof.castShadow=true; g.add(roof);
+ const door=new THREE.Mesh(new THREE.BoxGeometry(.9*scale,1.8*scale,.12*scale),mat(0x53301c)); door.position.set(0,.9*scale,1.8*scale); g.add(door);
 }
+hut(-6,-3,1.25); hut(7,-15,.85); hut(16,9,.9); hut(87,-40,1.1); hut(-85,55,.95);
 
-function showMessage(text) {
-  message.textContent = text;
-  message.classList.remove("hidden");
-
-  clearTimeout(showMessage.timer);
-  showMessage.timer = setTimeout(() => {
-    message.classList.add("hidden");
-  }, 2600);
+function dock(x,z,len=14,rot=0){
+ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot; scene.add(g);
+ const wood=mat(0x8b603a);
+ for(let i=0;i<5;i++){const plank=new THREE.Mesh(new THREE.BoxGeometry(len,.3,1.05),wood);plank.position.set(0,.05,i-2);plank.castShadow=true;g.add(plank);}
+ for(let i=0;i<4;i++){const post=new THREE.Mesh(new CylinderGeometry(.22,.25,2,8),wood);post.position.set(-len/2+i*len/3,-.6,2.5);g.add(post);}
 }
-
-function loadPlayer() {
-  let finished = false;
-  const finishLoading = () => {
-    if (finished) return;
-    finished = true;
-    loading.classList.add("hidden");
-  };
-
-  // Karakter dosyası gelmese bile oyun dünyası açılabilsin.
-  const timeout = setTimeout(() => {
-    if (finished) return;
-    console.error("Rogue.gltf yükleme zaman aşımı.");
-    const fallback = new THREE.Group();
-    const body = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.45, 1.0, 4, 8),
-      new THREE.MeshStandardMaterial({ color: 0x244f9c })
-    );
-    body.position.y = 0.9;
-    fallback.add(body);
-    const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.32, 16, 12),
-      new THREE.MeshStandardMaterial({ color: 0xffd3a4 })
-    );
-    head.position.y = 1.65;
-    fallback.add(head);
-    player.add(fallback);
-    loading.innerHTML = "<h1>Model yüklenemedi</h1><p>Oyun model olmadan açılıyor...</p>";
-    setTimeout(finishLoading, 1200);
-  }, 12000);
-
-  loader.load(
-    "./Rogue.gltf",
-    gltf => {
-      if (finished) return;
-      clearTimeout(timeout);
-      const model = gltf.scene;
-      fitModel(model, 1.8);
-      player.add(model);
-
-      playerMixer = new THREE.AnimationMixer(model);
-      gltf.animations.forEach(clip => {
-        playerActions[clip.name] = playerMixer.clipAction(clip);
-      });
-      playAnimation("idle");
-      finishLoading();
-    },
-    progress => {
-      if (progress.total) {
-        const pct = Math.round(progress.loaded / progress.total * 100);
-        loading.querySelector("p").textContent = "Karakter yükleniyor: " + pct + "%";
-      }
-    },
-    error => {
-      clearTimeout(timeout);
-      console.error("Rogue.gltf yüklenemedi:", error);
-      loading.innerHTML = "<h1>Karakter dosyası yüklenemedi</h1><p>Model olmadan dünya açılıyor...</p>";
-      finishLoading();
-    }
-  );
+dock(35,4,18,-.25); dock(105,-41,15,.35); dock(-66,40,13,-.4);
+function boat(x,z,scale=1){
+ const g=new THREE.Group();g.position.set(x,-.7,z);scene.add(g);
+ const hull=new THREE.Mesh(new THREE.ConeGeometry(2.3*scale,7*scale,6),mat(0x713c28));hull.rotation.x=Math.PI/2; hull.rotation.z=Math.PI/6;hull.position.y=.1;g.add(hull);
+ const mast=new THREE.Mesh(new CylinderGeometry(.12,.16,6*scale,8),mat(0x5b391f));mast.position.y=3*scale;g.add(mast);
+ const sail=new THREE.Mesh(new PlaneGeometry(3.4*scale,4.2*scale),new THREE.MeshStandardMaterial({color:0xf3e5c0,side:THREE.DoubleSide})); sail.position.set(0,3.3*scale,0);g.add(sail);
+ const flag=new THREE.Mesh(new ConeGeometry(.5*scale,1.2*scale,3),mat(0x9f2226));flag.position.set(0,6.3*scale,0);g.add(flag);
 }
+boat(26,10,.8); boat(99,-27,.65); boat(-68,62,.7);
 
-loadPlayer();
+function crate(x,z){const c=new THREE.Mesh(new BoxGeometry(1.4,1.4,1.4),mat(0x9b6a38));c.position.set(x,.7,z);c.castShadow=true;scene.add(c);}
+for(const p of [[-16,-5],[-19,-7],[4,-24],[24,2],[90,-52],[76,-33],[-91,60]])crate(...p);
 
-// NPC'LER
-const npcData = [
-  {
-    file: "Warrior.gltf",
-    x: 8, z: -5,
-    name: "Kılıç Ustası",
-    message: "Kılıcını geliştir. Büyük denizlerde güçlü olmalısın!"
-  },
-  {
-    file: "Ranger.gltf",
-    x: -10, z: -8,
-    name: "Keskin Nişancı",
-    message: "Uzak adalarda keşfedilmemiş hazineler var."
-  },
-  {
-    file: "Cleric.gltf",
-    x: 12, z: 9,
-    name: "Şifacı",
-    message: "Yolculuğa çıkmadan önce hazırlığını yap."
-  },
-  {
-    file: "Wizard.gltf",
-    x: -15, z: 10,
-    name: "Gizemli Büyücü",
-    message: "Denizlerde tuhaf güçler uyandığını hissediyorum."
-  },
-  {
-    file: "Monk.gltf",
-    x: 2, z: 16,
-    name: "Dövüş Ustası",
-    message: "Gerçek güç, antrenmanla kazanılır."
-  }
+const player=new THREE.Group();scene.add(player);let mixer=null,actions={},current="";
+function fit(model,height=1.8){const b=new THREE.Box3().setFromObject(model),s=new THREE.Vector3();b.getSize(s);if(s.y>0)model.scale.multiplyScalar(height/s.y);const f=new THREE.Box3().setFromObject(model);model.position.y-=f.min.y;model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});}
+function anim(k){if(!mixer)return;const names=Object.keys(actions);let n=names.find(a=>a.toLowerCase().includes(k))|| (k==="walk"?names.find(a=>a.toLowerCase().includes("run")):null);if(!n||n===current)return;Object.values(actions).forEach(a=>a.fadeOut(.12));actions[n].reset().fadeIn(.12).play();current=n;}
+let finished=false;function endLoad(){if(finished)return;finished=true;loading.classList.add("hidden");}
+function makeFallback(){const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.38,.9,4,8),mat(0xc93c2d));torso.position.y=.95;player.add(torso);const head=new THREE.Mesh(new THREE.SphereGeometry(.32,16,12),mat(0xffd2a1));head.position.y=1.7;player.add(head);const hat=new THREE.Mesh(new THREE.CylinderGeometry(.55,.5,.14,16),mat(0x7b4c20));hat.position.y=2.05;player.add(hat);endLoad();}
+loader.load("./Rogue.gltf",g=>{if(finished)return;fit(g.scene);player.add(g.scene);mixer=new THREE.AnimationMixer(g.scene);g.animations.forEach(c=>actions[c.name]=mixer.clipAction(c));anim("idle");endLoad();},p=>{if(p.total)loading.querySelector("p").textContent="Macera hazırlanıyor "+Math.round(p.loaded/p.total*100)+"%";},()=>makeFallback());
+setTimeout(()=>{if(!finished)makeFallback();},12000);
+
+// NPCs from existing character files; the names/dialogue are custom for this game.
+const npcList=[
+ {file:"Warrior.gltf",x:8,z:-5,name:"Kaptan Roka",role:"Köy kaptanı",text:"Yeni misin? Kıyıdaki meyveleri topla; adalar hakkında bilgi verebilirim."},
+ {file:"Ranger.gltf",x:-10,z:-8,name:"Mira",role:"Gezgin",text:"İkinci adaya giden iskele doğuda. Orada daha nadir meyveler bulunur."},
+ {file:"Cleric.gltf",x:12,z:9,name:"Lina",role:"Doktor",text:"Yolculukta dikkatli ol. Meyveler tuhaf güçler kazandırabilir."},
+ {file:"Wizard.gltf",x:88,z:-42,name:"Yaşlı Koru",role:"Ada bilgesi",text:"Deniz üç adaya açılıyor. Her adanın kendi sırrı var."},
+ {file:"Monk.gltf",x:-85,z:55,name:"Usta Zen",role:"Antrenör",text:"Daha hızlı hareket etmek için SHIFT ile koşmayı dene."}
 ];
+const npcs=[];
+for(const d of npcList){const group=new THREE.Group();group.position.set(d.x,0,d.z);scene.add(group);const npc={...d,group,mixer:null};npcs.push(npc);loader.load("./"+d.file,g=>{const model=cloneSkeleton(g.scene);fit(model);group.add(model);if(g.animations.length){npc.mixer=new THREE.AnimationMixer(model);const idle=g.animations.find(a=>a.name.toLowerCase().includes("idle"))||g.animations[0];npc.mixer.clipAction(idle).play();}},undefined,()=>{});}
 
-const npcs = [];
-
-for (const data of npcData) {
-  const group = new THREE.Group();
-  group.position.set(data.x, 0, data.z);
-  scene.add(group);
-
-  const npc = { ...data, group, mixer: null };
-  npcs.push(npc);
-
-  loader.load(
-    `./${data.file}`,
-    gltf => {
-      const model = cloneSkeleton(gltf.scene);
-      fitModel(model, 1.8);
-      group.add(model);
-
-      if (gltf.animations.length) {
-        npc.mixer = new THREE.AnimationMixer(model);
-        const idle =
-          gltf.animations.find(a =>
-            a.name.toLowerCase().includes("idle")
-          ) || gltf.animations[0];
-
-        npc.mixer.clipAction(idle).play();
-      }
-    },
-    undefined,
-    error => console.error(data.file, "yüklenemedi:", error)
-  );
+// Devil Fruit pickup visuals and interactions
+const fruitTypes=[
+ {name:"Gomu Gomu",color:0xf1b3d7,desc:"Lastik gücü! Toplama sayısı +1."},
+ {name:"Mera Mera",color:0xf26c30,desc:"Alev gücü! Toplama sayısı +1."},
+ {name:"Goro Goro",color:0xffd83c,desc:"Elektrik gücü! Toplama sayısı +1."},
+ {name:"Hie Hie",color:0x8ce9f5,desc:"Buz gücü! Toplama sayısı +1."},
+ {name:"Yami Yami",color:0x56335f,desc:"Karanlık güç! Toplama sayısı +1."},
+ {name:"Tori Tori",color:0x8dd77b,desc:"Doğa gücü! Toplama sayısı +1."}
+];
+const fruits=[];
+function createFruit(data,x,z){
+ const g=new THREE.Group();g.position.set(x,.65,z);
+ const sphere=new THREE.Mesh(new SphereGeometry(.55,20,16),mat(data.color,.45));sphere.scale.set(1,.85,1);g.add(sphere);
+ const swirl=new THREE.Mesh(new TorusGeometry(.23,.07,8,16),mat(0xf4e9cf));swirl.position.y=.2;swirl.rotation.x=Math.PI/2;g.add(swirl);
+ const stem=new THREE.Mesh(new CylinderGeometry(.07,.1,.35,7),mat(0x5c8b3e));stem.position.y=.62;stem.rotation.z=.35;g.add(stem);
+ const leaf=new THREE.Mesh(new SphereGeometry(.18,8,8),mat(0x63a843));leaf.position.set(.22,.7,0);leaf.scale.set(1,.35,.6);g.add(leaf);
+ scene.add(g); fruits.push({data,group:g,taken:false});
 }
+createFruit(fruitTypes[0],-21,12);createFruit(fruitTypes[1],12,-22);createFruit(fruitTypes[2],92,-55);createFruit(fruitTypes[3],-98,50);createFruit(fruitTypes[4],104,-29);createFruit(fruitTypes[5],-75,69);
+const inventory=[];const fruitBox=document.querySelector("#fruitInventory");const quest=document.querySelector("#quest");
+function updateInventory(){fruitBox.textContent=inventory.length?inventory.join(" · "):"Boş";document.querySelector("#fruitCount").textContent=inventory.length;}
+function toast(t){message.textContent=t;message.classList.remove("hidden");clearTimeout(toast.timer);toast.timer=setTimeout(()=>message.classList.add("hidden"),2600);}
+function nearby(){let found=null,dist=3.6;for(const n of npcs){const d=player.position.distanceTo(n.group.position);if(d<dist){found=n;dist=d;}}for(const f of fruits){if(f.taken)continue;const d=player.position.distanceTo(f.group.position);if(d<dist){found=f;dist=d;}}return found;}
+function interact(){const target=nearby();if(!target){toast("Yakında konuşacak biri veya meyve yok.");return;}if(target.data){target.taken=true;inventory.push(target.data.name);scene.remove(target.group);updateInventory();toast(target.data.name+" meyvesini topladın! "+target.data.desc);quest.textContent="Görev: 6 şeytan meyvesini bul ("+inventory.length+"/6)";return;}document.querySelector("#npcName").textContent=target.name+" · "+target.role;document.querySelector("#npcText").textContent=target.text;document.querySelector("#dialog").classList.remove("hidden");}
+document.querySelector("#closeDialog").onclick=()=>document.querySelector("#dialog").classList.add("hidden");
+document.querySelector("#interact").onclick=interact;addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==="e")interact();});addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
-// KLAVYE KONTROLLERİ
-const keys = {};
-
-addEventListener("keydown", event => {
-  keys[event.key.toLowerCase()] = true;
-
-  if (event.key.toLowerCase() === "e") {
-    interact();
-  }
-});
-
-addEventListener("keyup", event => {
-  keys[event.key.toLowerCase()] = false;
-});
-
-// MOBİL JOYSTICK
-let joyX = 0;
-let joyY = 0;
-let joyOn = false;
-
-const joystick = document.querySelector("#joystick");
-const stick = document.querySelector("#stick");
-
-joystick.addEventListener("pointerdown", event => {
-  joyOn = true;
-  joystick.setPointerCapture(event.pointerId);
-  moveStick(event);
-});
-
-joystick.addEventListener("pointermove", event => {
-  if (joyOn) moveStick(event);
-});
-
-function stopStick() {
-  joyOn = false;
-  joyX = 0;
-  joyY = 0;
-  stick.style.transform = "translate(0px, 0px)";
-}
-
-joystick.addEventListener("pointerup", stopStick);
-joystick.addEventListener("pointercancel", stopStick);
-
-function moveStick(event) {
-  const rect = joystick.getBoundingClientRect();
-
-  let dx = event.clientX - (rect.left + rect.width / 2);
-  let dy = event.clientY - (rect.top + rect.height / 2);
-
-  const max = rect.width * 0.32;
-  const length = Math.hypot(dx, dy);
-
-  if (length > max) {
-    dx = dx / length * max;
-    dy = dy / length * max;
-  }
-
-  joyX = dx / max;
-  joyY = dy / max;
-
-  stick.style.transform = `translate(${dx}px, ${dy}px)`;
-}
-
-// KAMERA
-let cameraAngle = 0;
-let dragging = false;
-let lastX = 0;
-
-renderer.domElement.addEventListener("pointerdown", event => {
-  if (event.pointerType === "mouse" && event.button === 0) {
-    dragging = true;
-    lastX = event.clientX;
-  }
-});
-
-addEventListener("pointerup", () => {
-  dragging = false;
-});
-
-addEventListener("pointermove", event => {
-  if (dragging) {
-    cameraAngle -= (event.clientX - lastX) * 0.005;
-    lastX = event.clientX;
-  }
-});
-
-// NPC İLE KONUŞMA
-function interact() {
-  let closest = null;
-  let bestDistance = 3.5;
-
-  for (const npc of npcs) {
-    const distance = player.position.distanceTo(npc.group.position);
-
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      closest = npc;
-    }
-  }
-
-  if (!closest) {
-    showMessage("Konuşmak için bir NPC'ye yaklaş!");
-    return;
-  }
-
-  document.querySelector("#npcName").textContent = closest.name;
-  document.querySelector("#npcText").textContent = closest.message;
-  dialog.classList.remove("hidden");
-}
-
-document.querySelector("#closeDialog").addEventListener("click", () => {
-  dialog.classList.add("hidden");
-});
-
-document.querySelector("#interact").addEventListener("click", interact);
-
-// HAREKET
-const forward = new THREE.Vector3();
-const right = new THREE.Vector3();
-const movement = new THREE.Vector3();
-
-function updatePlayer(dt) {
-  const x =
-    (keys.d || keys.arrowright ? 1 : 0) -
-    (keys.a || keys.arrowleft ? 1 : 0) + joyX;
-
-  const z =
-    (keys.s || keys.arrowdown ? 1 : 0) -
-    (keys.w || keys.arrowup ? 1 : 0) + joyY;
-
-  movement.set(0, 0, 0);
-
-  camera.getWorldDirection(forward);
-  forward.y = 0;
-  forward.normalize();
-
-  right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
-
-  movement.addScaledVector(forward, -z);
-  movement.addScaledVector(right, x);
-
-  const moving = movement.lengthSq() > 0.015;
-  const running = !!keys.shift;
-
-  if (moving) {
-    movement.normalize();
-
-    player.position.addScaledVector(
-      movement,
-      (running ? 10.5 : 6.5) * dt
-    );
-
-    const angle = Math.atan2(movement.x, movement.z);
-    player.rotation.y = THREE.MathUtils.lerp(
-      player.rotation.y,
-      angle,
-      Math.min(dt * 11, 1)
-    );
-
-    playAnimation(running ? "run" : "walk");
-  } else {
-    playAnimation("idle");
-  }
-
-  player.position.x = THREE.MathUtils.clamp(player.position.x, -38, 38);
-  player.position.z = THREE.MathUtils.clamp(player.position.z, -38, 38);
-}
-
-// KAMERA TAKİBİ
-function updateCamera(dt) {
-  const desired = new THREE.Vector3(
-    player.position.x + Math.sin(cameraAngle) * 7.5,
-    player.position.y + 4.1,
-    player.position.z + Math.cos(cameraAngle) * 7.5
-  );
-
-  camera.position.lerp(desired, Math.min(dt * 5, 1));
-
-  camera.lookAt(
-    player.position.x,
-    player.position.y + 1.25,
-    player.position.z
-  );
-}
-
-// EKRAN BOYUTU
-addEventListener("resize", () => {
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
-
-// OYUN DÖNGÜSÜ
-function animate() {
-  requestAnimationFrame(animate);
-
-  const dt = Math.min(clock.getDelta(), 0.05);
-
-  updatePlayer(dt);
-  updateCamera(dt);
-
-  if (playerMixer) playerMixer.update(dt);
-
-  for (const npc of npcs) {
-    if (npc.mixer) npc.mixer.update(dt);
-  }
-
-  renderer.render(scene, camera);
-}
-
-camera.position.set(0, 5, 9);
-camera.lookAt(0, 1, 0);
-
-animate();
-
-document.querySelector("#level").textContent = "1";
-document.querySelector("#money").textContent = "100";
-document.querySelector("#xp").textContent = "0";
+const keys={};let joyX=0,joyY=0,joyOn=false;const joystick=document.querySelector("#joystick"),stick=document.querySelector("#stick");
+joystick.addEventListener("pointerdown",e=>{joyOn=true;joystick.setPointerCapture(e.pointerId);moveStick(e);});
+joystick.addEventListener("pointermove",e=>{if(joyOn)moveStick(e);});
+function stopStick(){joyOn=false;joyX=joyY=0;stick.style.transform="translate(0,0)";}
+joystick.addEventListener("pointerup",stopStick);joystick.addEventListener("pointercancel",stopStick);
+function moveStick(e){const r=joystick.getBoundingClientRect();let dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,max=r.width*.32,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len*max;}joyX=dx/max;joyY=dy/max;stick.style.transform=`translate(${dx}px,${dy}px)`;}
+let cameraAngle=0,dragging=false,lastX=0;
+renderer.domElement.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse"&&e.button===0){dragging=true;lastX=e.clientX;}});
+addEventListener("pointerup",()=>dragging=false);addEventListener("pointermove",e=>{if(dragging){cameraAngle-=(e.clientX-lastX)*.005;lastX=e.clientX;}});
+const forward=new THREE.Vector3(),right=new THREE.Vector3(),movement=new THREE.Vector3();
+function updatePlayer(dt){const x=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+joyX,z=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0)+joyY;movement.set(0,0,0);camera.getWorldDirection(forward);forward.y=0;forward.normalize();right.crossVectors(forward,new THREE.Vector3(0,1,0)).normalize();movement.addScaledVector(forward,-z);movement.addScaledVector(right,x);const moving=movement.lengthSq()>.01,running=!!keys.shift;if(moving){movement.normalize();player.position.addScaledVector(movement,(running?11:6.5)*dt);player.rotation.y=Math.atan2(movement.x,movement.z);anim(running?"run":"walk");}else anim("idle");player.position.x=THREE.MathUtils.clamp(player.position.x,-112,125);player.position.z=THREE.MathUtils.clamp(player.position.z,-100,110);}
+function updateCamera(dt){const desired=new THREE.Vector3(player.position.x+Math.sin(cameraAngle)*8,player.position.y+4.2,player.position.z+Math.cos(cameraAngle)*8);camera.position.lerp(desired,Math.min(dt*5,1));camera.lookAt(player.position.x,player.position.y+1.2,player.position.z);}
+function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}addEventListener("resize",resize);
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);updatePlayer(dt);updateCamera(dt);if(mixer)mixer.update(dt);for(const n of npcs)if(n.mixer)n.mixer.update(dt);for(const f of fruits)if(!f.taken){f.group.rotation.y+=dt*.9;f.group.position.y=.65+Math.sin(clock.elapsedTime*2+f.group.position.x)*.18;}renderer.render(scene,camera);}
+camera.position.set(0,5,9);camera.lookAt(0,1,0);updateInventory();document.querySelector("#level").textContent="1";document.querySelector("#money").textContent="100";document.querySelector("#xp").textContent="0";animate();
