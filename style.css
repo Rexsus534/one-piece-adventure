@@ -11,3 +11,6 @@
 .world-map-window iframe{flex:1;min-height:200px;width:100%;border:1px solid #ffffff44;border-radius:10px;background:#081a2c;}
 .atlasFallback{display:inline-block;align-self:flex-start;color:#ffd65a;font-weight:bold;padding:6px;}
 @media(max-width:650px){#worldMapButton{font-size:10px;padding:6px 8px;margin-top:8px;margin-left:0}.brand{display:flex;flex-direction:column;align-items:flex-start;gap:4px}.world-map-window header{font-size:14px}.world-map-window{height:95vh;padding:10px;}}
+
+/* Live minimap */
+#miniMapWrap{position:fixed;right:16px;top:105px;width:190px;padding:8px;background:#102b45dd;border:1px solid #ffd65a99;border-radius:13px;box-shadow:0 5px 18px #0004;pointer-events:none;text-align:center}#miniMap{display:block;width:174px;height:174px;margin:auto;border-radius:50%;border:1px solid #ffffff66}.miniMapTitle{font-size:11px;font-weight:900;color:#ffd65a;letter-spacing:1px;margin-bottom:5px}.miniMapLegend{display:flex;justify-content:center;gap:8px;font-size:9px;margin-top:5px;color:#fff}@media(max-width:650px){#miniMapWrap{top:112px;right:8px;width:128px;padding:5px}#miniMap{width:116px;height:116px}.miniMapTitle{font-size:9px}.miniMapLegend{font-size:7px;gap:4px}#side-ui{top:65px;left:8px;max-width:145px}}
