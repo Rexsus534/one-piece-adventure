@@ -124,7 +124,7 @@ function setupPlayerModel(model,clips=[]){
 }
 function loadTexturedOBJ(){
  if(finished)return;
- loading.querySelector("p").textContent="Luffy kaplamaları yükleniyor...";
+ loading.querySelector("p").textContent="Luffy modeli ve kaplamaları yükleniyor...";
  const mtlLoader=new MTLLoader();
  mtlLoader.setPath("./");
  mtlLoader.load("8810USAAT027ZSACEMWCOUTRE.mtl",materials=>{
@@ -135,23 +135,14 @@ function loadTexturedOBJ(){
   objLoader.load("8810USAAT027ZSACEMWCOUTRE.obj",obj=>{
    if(finished)return;
    setupPlayerModel(obj,[]);
-  },undefined,()=>makeFallback());
- },undefined,()=>makeFallback());
+  },p=>{
+   if(p.total)loading.querySelector("p").textContent="Luffy modeli yükleniyor "+Math.round(p.loaded/p.total*100)+"%";
+  },err=>{console.error("OBJ load error",err);makeFallback();});
+ },undefined,err=>{console.error("MTL load error",err);makeFallback();});
 }
-const fbxLoader=new FBXLoader();
-fbxLoader.setResourcePath("./");
-fbxLoader.load("./8810USAAT027ZSACEMWCOUTRE.fbx",fbx=>{
- if(finished)return;
- let boneCount=0;
- fbx.traverse(o=>{if(o.isBone)boneCount++;});
- if(fbx.animations.length||boneCount){
-  setupPlayerModel(fbx,fbx.animations);
- }else{
-  loadTexturedOBJ();
- }
-},p=>{
- if(p.total)loading.querySelector("p").textContent="Luffy modeli yükleniyor "+Math.round(p.loaded/p.total*100)+"%";
-},()=>loadTexturedOBJ());
+// OBJ + MTL is the textured source: load it first so the FBX cannot override it
+// with an untextured material set.
+loadTexturedOBJ();
 setTimeout(()=>{if(!finished)loadTexturedOBJ();},30000);
 
 // NPCs from existing character files; the names/dialogue are custom for this game.
