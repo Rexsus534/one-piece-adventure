@@ -169,27 +169,62 @@ function showMessage(text) {
 }
 
 function loadPlayer() {
+  let finished = false;
+  const finishLoading = () => {
+    if (finished) return;
+    finished = true;
+    loading.classList.add("hidden");
+  };
+
+  // Karakter dosyası gelmese bile oyun dünyası açılabilsin.
+  const timeout = setTimeout(() => {
+    if (finished) return;
+    console.error("Rogue.gltf yükleme zaman aşımı.");
+    const fallback = new THREE.Group();
+    const body = new THREE.Mesh(
+      new THREE.CapsuleGeometry(0.45, 1.0, 4, 8),
+      new THREE.MeshStandardMaterial({ color: 0x244f9c })
+    );
+    body.position.y = 0.9;
+    fallback.add(body);
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.32, 16, 12),
+      new THREE.MeshStandardMaterial({ color: 0xffd3a4 })
+    );
+    head.position.y = 1.65;
+    fallback.add(head);
+    player.add(fallback);
+    loading.innerHTML = "<h1>Model yüklenemedi</h1><p>Oyun model olmadan açılıyor...</p>";
+    setTimeout(finishLoading, 1200);
+  }, 12000);
+
   loader.load(
     "./Rogue.gltf",
     gltf => {
+      if (finished) return;
+      clearTimeout(timeout);
       const model = gltf.scene;
       fitModel(model, 1.8);
       player.add(model);
 
       playerMixer = new THREE.AnimationMixer(model);
-
       gltf.animations.forEach(clip => {
         playerActions[clip.name] = playerMixer.clipAction(clip);
       });
-
       playAnimation("idle");
-      loading.classList.add("hidden");
+      finishLoading();
     },
-    undefined,
+    progress => {
+      if (progress.total) {
+        const pct = Math.round(progress.loaded / progress.total * 100);
+        loading.querySelector("p").textContent = "Karakter yükleniyor: " + pct + "%";
+      }
+    },
     error => {
+      clearTimeout(timeout);
       console.error("Rogue.gltf yüklenemedi:", error);
-      loading.innerHTML =
-        "<h1>Karakter yüklenemedi</h1><p>Rogue.gltf dosyasını kontrol et.</p>";
+      loading.innerHTML = "<h1>Karakter dosyası yüklenemedi</h1><p>Model olmadan dünya açılıyor...</p>";
+      finishLoading();
     }
   );
 }
