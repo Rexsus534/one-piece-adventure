@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ONE PIECE: GRAND ADVENTURE</title>
+<link rel="stylesheet" href="style.css">
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+
+<body>
+
+<div id="loading">
+  <h1>GRAND ADVENTURE</h1>
+  <p>Denizlere açılmaya hazırlan...</p>
+</div>
+
+<div id="game"></div>
+
+<div class="top">
+  <h2>☠ GRAND ADVENTURE</h2>
+  <div class="stats">
+    <span>LV <b id="level">1</b></span>
+    <span>₿ <b id="money">0</b></span>
+    <span>XP <b id="xp">0</b></span>
+  </div>
+</div>
+
+<div class="quest">
+  <b>AKTİF GÖREV</b>
+  <h3 id="questTitle">Limanı keşfet</h3>
+  <p id="questText">Kaptan ile konuş.</p>
+</div>
+
+<div id="message"></div>
+
+<div id="dialog" class="hidden">
+  <h3 id="npcName">NPC</h3>
+  <p id="npcText"></p>
+  <button id="closeDialog">Devam et</button>
+</div>
+
+<div id="mobile">
+  <div id="joystick">
+    <div id="stick"></div>
+  </div>
+  <button id="interact">E</button>
+</div>
+
+<div class="help">
+  WASD: Hareket | SHIFT: Koş | E: Konuş | Fare: Kamera
+</div>
+
+<script type="module" src="game.js"></script>
+
+</body>
+</html>
