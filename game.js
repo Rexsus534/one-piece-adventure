@@ -97,7 +97,7 @@ function createFruit(data,x,z){
  const leaf=new THREE.Mesh(new THREE.SphereGeometry(.18,8,8),mat(0x63a843));leaf.position.set(.22,.7,0);leaf.scale.set(1,.35,.6);g.add(leaf);
  scene.add(g); fruits.push({data,group:g,taken:false});
 }
-createFruit(fruitTypes[0],-21,12);createFruit(fruitTypes[1],12,-22);createFruit(fruitTypes[2],92,-55);createFruit(fruitTypes[3],-98,50);createFruit(fruitTypes[4],104,-29);createFruit(fruitTypes[5],-75,69);
+createFruit(fruitTypes[0],-21,12);createFruit(fruitTypes[1],12,-22);createFruit(fruitTypes[2],24,15);createFruit(fruitTypes[3],-28,17);createFruit(fruitTypes[4],30,-20);createFruit(fruitTypes[5],-19,-26);
 const inventory=[];const collectedFruits=[];const fruitBox=document.querySelector("#fruitInventory");const quest=document.querySelector("#quest");let eatingTimer=0;let powerTimer=0;let powerColor=0xffd65a;let powerRing=null;let powerSparks=[];
 function updateInventory(){fruitBox.textContent=inventory.length?inventory.join(" · "):"Boş";document.querySelector("#fruitCount").textContent=inventory.length;}
 function toast(t){message.textContent=t;message.classList.remove("hidden");clearTimeout(toast.timer);toast.timer=setTimeout(()=>message.classList.add("hidden"),2600);}
@@ -123,3 +123,9 @@ function updateCamera(dt){const desired=new THREE.Vector3(player.position.x+Math
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}addEventListener("resize",resize);
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);updatePlayer(dt);updateCamera(dt);if(mixer)mixer.update(dt);for(const n of npcs)if(n.mixer)n.mixer.update(dt);updatePower(dt);for(const f of fruits)if(!f.taken){f.group.rotation.y+=dt*.9;f.group.position.y=.65+Math.sin(clock.elapsedTime*2+f.group.position.x)*.18;}renderer.render(scene,camera);}
 camera.position.set(0,5,9);camera.lookAt(0,1,0);updateInventory();document.querySelector("#level").textContent="1";document.querySelector("#money").textContent="100";document.querySelector("#xp").textContent="0";animate();
+// In-game atlas window controls
+const mapOverlay=document.querySelector("#worldMapOverlay");
+document.querySelector("#worldMapButton")?.addEventListener("click",()=>mapOverlay?.classList.remove("hidden"));
+document.querySelector("#closeWorldMap")?.addEventListener("click",()=>mapOverlay?.classList.add("hidden"));
+mapOverlay?.addEventListener("click",e=>{if(e.target===mapOverlay)mapOverlay.classList.add("hidden");});
+addEventListener("keydown",e=>{if(e.key==="Escape")mapOverlay?.classList.add("hidden");});
