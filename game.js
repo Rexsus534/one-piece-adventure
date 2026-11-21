@@ -1,6 +1,9 @@
 import * as THREE from "https://esm.sh/three@0.160.0";
 import { GLTFLoader } from "https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
 import { clone as cloneSkeleton } from "https://esm.sh/three@0.160.0/examples/jsm/utils/SkeletonUtils.js";
+import { FBXLoader } from "https://esm.sh/three@0.160.0/examples/jsm/loaders/FBXLoader.js";
+import { OBJLoader } from "https://esm.sh/three@0.160.0/examples/jsm/loaders/OBJLoader.js";
+import { MTLLoader } from "https://esm.sh/three@0.160.0/examples/jsm/loaders/MTLLoader.js";
 
 const canvas=document.querySelector("#game"), loading=document.querySelector("#loading"), message=document.querySelector("#message");
 const scene=new THREE.Scene(); scene.background=new THREE.Color(0x8fd9ff); scene.fog=new THREE.Fog(0x8fd9ff,100,260);
@@ -99,8 +102,57 @@ function proceduralLuffyPose(t,moving){
  }
 }
 let luffyMoving=false;
-loader.load("./8810USAAT027ZSACEMWCOUTRE.gltf",g=>{if(finished)return;fit(g.scene);tintUntextured(g.scene);player.add(g.scene);if(g.animations.length){mixer=new THREE.AnimationMixer(g.scene);g.animations.forEach(c=>actions[c.name]=mixer.clipAction(c));const idle=g.animations.find(c=>/idle|stand|breath/i.test(c.name))||g.animations[0];current=idle.name;actions[idle.name].play();}endLoad();},p=>{if(p.total)loading.querySelector("p").textContent="Macera hazırlanıyor "+Math.round(p.loaded/p.total*100)+"%";},()=>makeFallback());
-setTimeout(()=>{if(!finished)makeFallback();},12000);
+function setupPlayerModel(model,clips=[]){
+ if(finished)return;
+ fit(model);
+ model.traverse(o=>{
+  if(o.isMesh){
+   o.castShadow=true;o.receiveShadow=true;
+   const materials=Array.isArray(o.material)?o.material:[o.material];
+   for(const material of materials){if(material?.map)material.map.colorSpace=THREE.SRGBColorSpace;}
+  }
+  if(o.isBone&&/(arm|shoulder|elbow|leg|thigh|knee|spine|neck)/i.test(o.name||""))luffyRig.push(o);
+ });
+ player.add(model);
+ if(clips.length){
+  mixer=new THREE.AnimationMixer(model);
+  clips.forEach(c=>actions[c.name]=mixer.clipAction(c));
+  const idle=clips.find(c=>/idle|stand|breath/i.test(c.name))||clips[0];
+  current=idle.name;actions[idle.name].play();
+ }
+ endLoad();
+}
+function loadTexturedOBJ(){
+ if(finished)return;
+ loading.querySelector("p").textContent="Luffy kaplamaları yükleniyor...";
+ const mtlLoader=new MTLLoader();
+ mtlLoader.setPath("./");
+ mtlLoader.load("8810USAAT027ZSACEMWCOUTRE.mtl",materials=>{
+  materials.preload();
+  const objLoader=new OBJLoader();
+  objLoader.setMaterials(materials);
+  objLoader.setPath("./");
+  objLoader.load("8810USAAT027ZSACEMWCOUTRE.obj",obj=>{
+   if(finished)return;
+   setupPlayerModel(obj,[]);
+  },undefined,()=>makeFallback());
+ },undefined,()=>makeFallback());
+}
+const fbxLoader=new FBXLoader();
+fbxLoader.setResourcePath("./");
+fbxLoader.load("./8810USAAT027ZSACEMWCOUTRE.fbx",fbx=>{
+ if(finished)return;
+ let boneCount=0;
+ fbx.traverse(o=>{if(o.isBone)boneCount++;});
+ if(fbx.animations.length||boneCount){
+  setupPlayerModel(fbx,fbx.animations);
+ }else{
+  loadTexturedOBJ();
+ }
+},p=>{
+ if(p.total)loading.querySelector("p").textContent="Luffy modeli yükleniyor "+Math.round(p.loaded/p.total*100)+"%";
+},()=>loadTexturedOBJ());
+setTimeout(()=>{if(!finished)loadTexturedOBJ();},30000);
 
 // NPCs from existing character files; the names/dialogue are custom for this game.
 const npcList=[
