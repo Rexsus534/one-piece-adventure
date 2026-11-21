@@ -64,7 +64,10 @@
 <script>
 document.querySelector("#loading").innerHTML = "<h1>TEST BAŞARILI</h1>";
 </script>
-<script type="module" src="game.js"></script>
+<script type="module">
+import "./game.js";
+document.querySelector("#loading").innerHTML = "<h1>GAME.JS YÜKLENDİ</h1>";
+</script>
 
 </body>
 </html>
